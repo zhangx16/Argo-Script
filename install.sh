@@ -81,6 +81,19 @@ sed -e '/^umask 077$/r '"$work/extension" \
  "$work/upstream.sh" > "$work/manager.sh"
 # Keep built-in updater within this extension's boundary: reinstall instead.
 sed -i '/^_update_script() {/a\    echo "Reinstall from zhangx16/Argo-Script to update this patched manager."; return 1' "$work/manager.sh"
+# Debian runs `cron`, whereas Alpine usually runs `crond`. Do not override
+# a successful service start with a false negative from a crond-only probe.
+sed -i \
+ -e "s/pgrep -x crond/pgrep -x 'cron|crond|cronie'/g" \
+ -e 's/pidof crond/pidof cron crond cronie/g' \
+ -e 's/eval "$filter" -i "$tmp" 2>\/dev\/null/eval "$filter" -i "$tmp"/' \
+ -e 's/^\([[:space:]]*\)_enable_argo_watchdog$/\1_enable_argo_watchdog || { _stop_argo_tunnel "$target_port"; return 1; }/' \
+ "$work/manager.sh"
+# YAML rollback must also refresh the running listener, not only the files.
+sed -i '/if ! _add_node_to_yaml "\$proxy_json"; then/,/^    fi/ {
+ /^        return 1$/i\
+        _manage_service "restart" >/dev/null 2>\&1 || true
+}' "$work/manager.sh"
 bash -n "$work/manager.sh"
 stamp=$(date -u +%Y%m%dT%H%M%SZ)-$$
 backup="$BASE/backup-$stamp"
