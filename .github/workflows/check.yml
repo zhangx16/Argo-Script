@@ -1,0 +1,10 @@
+name: Check installer
+on: [push, pull_request, workflow_dispatch]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tests/check.py
