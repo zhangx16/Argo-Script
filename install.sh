@@ -33,6 +33,11 @@ if ! command -v bash >/dev/null || ! command -v curl >/dev/null; then
  elif command -v apt-get >/dev/null; then apt-get update; apt-get install -y bash curl ca-certificates
  else echo 'Install bash, curl and CA certificates first.' >&2; exit 1; fi
 fi
+# BusyBox may expose crontab without an OpenRC cron service. Install both
+# explicitly on Alpine so upstream can enable its Argo keepalive job.
+if command -v apk >/dev/null; then
+ apk add --no-cache dcron
+fi
 mkdir -p "$BASE" /usr/local/etc/sing-box
 chmod 700 "$BASE"
 work=$(mktemp -d "$BASE/build.XXXXXXXX")
