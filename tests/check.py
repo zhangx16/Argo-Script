@@ -34,6 +34,11 @@ with tempfile.TemporaryDirectory() as directory:
     assert '    _argo_auto_entry\n' in result
     assert 'temp) tunnel_mode=1;; fixed) tunnel_mode=2;;' in result
     assert 'Reinstall from zhangx16/Argo-Script' in result
+    assert "pgrep -x 'cron|crond|cronie'" in result
+    assert 'pidof cron crond cronie' in result
+    assert '_enable_argo_watchdog || { _stop_argo_tunnel "$target_port"; return 1; }' in result
+    rollback = result.split('if ! _add_node_to_yaml "$proxy_json"; then', 1)[1].split('    fi', 1)[0]
+    assert '_manage_service "restart"' in rollback
     # Test the persistent setting validation independently from upstream's main.
     extension = installer.split("cat > \"$work/extension\" <<'EOF'\n", 1)[1].split('\nEOF', 1)[0]
     settings = work / 'transport'
